@@ -1,174 +1,47 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import {
-  Container,
-  TextField,
-  Button,
-  Typography,
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  CardActionArea,
-} from '@mui/material'
-import { collection, doc, getDoc, getDocs, setDoc, writeBatch } from 'firebase/firestore'
-import { db } from '../../firebase' // Adjust import according to your firebase setup
-import { useUser } from '@clerk/nextjs'
+import { useRouter } from "next/navigation";
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { app } from "./firebase/firebase";
+import Features from "./components/Features";
+import About from "./components/About";
+import Pricing from "./components/Pricing";
+import Contact from "./components/Contact";
 
-export default function Generate() {
-  const [text, setText] = useState('')
-  const [flashcards, setFlashcards] = useState([])
-  const [setName, setSetName] = useState('')
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const { user } = useUser()
-
-  const handleSubmit = async () => {
-    if (!text.trim()) {
-      alert('Please enter some text to generate flashcards.')
-      return
-    }
-
-    try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        body: text,
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate flashcards')
+export default function Home() {
+    const router = useRouter();
+    const auth = getAuth(app); // Initialize Firebase Authentication
+    const provider = new GoogleAuthProvider();
+  
+    const handleContinue = () => {
+      router.push("./flashcards");
+    };
+  
+    const handleSignIn = async () => {
+      try {
+        const result = await signInWithPopup(auth, provider);
+        
+        router.push("/flashcards"); 
+      } catch (error) {
+        console.error("Error during sign-in:", error);
+        alert("Failed to sign in. Please try again.");
       }
-
-      const data = await response.json()
-      setFlashcards(data)
-    } catch (error) {
-      console.error('Error generating flashcards:', error)
-      alert('An error occurred while generating flashcards. Please try again.')
-    }
-  }
-
-  const handleOpenDialog = () => setDialogOpen(true)
-  const handleCloseDialog = () => setDialogOpen(false)
-
-  const saveFlashcards = async () => {
-    if (!setName.trim()) {
-      alert('Please enter a name for your flashcard set.')
-      return
-    }
-
-    try {
-      if (!user) {
-        alert('User is not authenticated.')
-        return
-      }
-
-      const userDocRef = doc(collection(db, 'users'), user.id)
-      const userDocSnap = await getDoc(userDocRef)
-      const batch = writeBatch(db)
-
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data()
-        const updatedSets = [...(userData.flashcardSets || []), { name: setName }]
-        batch.update(userDocRef, { flashcardSets: updatedSets })
-      } else {
-        batch.set(userDocRef, { flashcardSets: [{ name: setName }] })
-      }
-
-      const setDocRef = doc(collection(userDocRef, 'flashcardSets'), setName)
-      batch.set(setDocRef, { flashcards })
-
-      await batch.commit()
-
-      alert('Flashcards saved successfully!')
-      handleCloseDialog()
-      setSetName('')
-    } catch (error) {
-      console.error('Error saving flashcards:', error)
-      alert('An error occurred while saving flashcards. Please try again.')
-    }
-  }
+    };
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Generate Flashcards
-        </Typography>
-        <TextField
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          label="Enter text"
-          fullWidth
-          multiline
-          rows={4}
-          variant="outlined"
-          sx={{ mb: 2 }}
-        />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleSubmit}
-          fullWidth
-        >
-          Generate Flashcards
-        </Button>
-      </Box>
-
-      {flashcards.length > 0 && (
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h5" component="h2" gutterBottom>
-            Generated Flashcards
-          </Typography>
-          <Grid container spacing={2}>
-            {flashcards.map((flashcard, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6">Front:</Typography>
-                    <Typography>{flashcard.front}</Typography>
-                    <Typography variant="h6" sx={{ mt: 2 }}>Back:</Typography>
-                    <Typography>{flashcard.back}</Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-            <Button variant="contained" color="primary" onClick={handleOpenDialog}>
-              Save Flashcards
-            </Button>
-          </Box>
-        </Box>
-      )}
-
-      <Dialog open={dialogOpen} onClose={handleCloseDialog}>
-        <DialogTitle>Save Flashcard Set</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Please enter a name for your flashcard set.
-          </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Set Name"
-            type="text"
-            fullWidth
-            value={setName}
-            onChange={(e) => setSetName(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={saveFlashcards} color="primary">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
-  )
+    <div className="bg-gray-900 text-white">
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1 className="text-9xl font-bold text-center mb-4 gradient-text">QuantumFlash</h1>
+        <p className="text-4xl font-bold text-gray-400 mb-8 gradient-text-p">Flashcards to make your life easier.</p>
+        <div className="flex space-x-6">
+          <button className="button py-3 px-6 rounded-lg font-bold shadow-md text-xl" onClick={handleSignIn}>Sign In</button>
+          <button className="button-2 py-3 px-6 rounded-lg font-bold shadow-md text-xl" onClick={handleContinue}>Continue without Signing In</button>
+        </div>
+      </div>
+      <Features />
+      <About />
+      <Pricing />
+      <Contact />
+    </div>
+  );
 }
