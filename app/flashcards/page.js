@@ -56,9 +56,12 @@ export default function Generate() {
     }
 
     try {
-      const response = await fetch('/api/generate', {
+      const response = await fetch('/api/generateflashcards', {
         method: 'POST',
-        body: text,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
       })
 
       if (!response.ok) {
