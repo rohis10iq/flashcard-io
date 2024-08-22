@@ -21,7 +21,7 @@ export default function Home() {
       try {
         const result = await signInWithPopup(auth, provider);
         
-        router.push("/flashcards"); 
+        router.push("./flashcards"); 
       } catch (error) {
         console.error("Error during sign-in:", error);
         alert("Failed to sign in. Please try again.");
